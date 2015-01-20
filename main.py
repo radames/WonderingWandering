@@ -9,40 +9,71 @@ def split_url(url):
 def domain(url):
     return '.'.join(url.split('.')[-2:])
 
+class ImgurSurfer(object):
+
+    url = "http://imgur.com"
+    domain = "imgur.com"
+
+    def __init__(self):
+        self.alive = True
+
+    def act(self, driver):
+        pass
+
+class DefaultSurfer(object):
+
+    url = None
+    domain = 'all'
+
+    def __init__(self):
+        self.alive = True
+
+    def act(self, driver, url):
+        page = driver.get(url)
+        time.sleep(3)
+        driver.back()
+
+
 class RedditSurfer(object):
 
     url = "http://reddit.com"
-    alive = True
+    domain = 'reddit.com'
     history = []
 
     def __init__(self):
-        pass
+        self.alive = True
 
-    def act(self, driver):
-        page = driver.get(self.url)
+    def act(self, driver, url=None):
+        if not url:
+            page = driver.get(self.url)
+
         self.history.append(self.url)
         i = 5
-#        action = webdriver.ActionChains(driver)
         while i > 0:
             site_content = driver.find_element_by_id("siteTable")
-            comments_links = site_content.find_elements_by_class_name("comments")
+            contents = site_content.find_elements_by_class_name("title")
+            comments = site_content.find_elements_by_class_name("comments")
+            contents_links = [link.get_attribute('href') for link in contents]
+            contents_links = [c for c in contents_links if c]
+            comments_links = [link.get_attribute('href') for link in comments]
 
-            links = [link.get_attribute('href') for link in comments_links]
-            for link in links:
+            for content_link, comment_link in zip(contents_links, comments_links):
                 time.sleep(2)
-                new_page = driver.get(link)
-                self.history.append(link)
+                new_page = driver.get(comment_link)
+                self.history.append(comment_link)
                 i = 0
                 while True:
                     driver.execute_script("window.scrollTo(0, {}*200);".format(i))
                     i += 1
                     time.sleep(1)
-#                    action.move_by_offset(i*10, i*10)
-#                    driver.mouse_move(i*10, i*20)
-                    if i == 5:
+                    if i == 3:
                         break
-#                action.perform()
-#                time.sleep(3)
+
+                if domain(split_url(content_link)[0]) == 'imgur.com':
+                    driver.get(content_link)
+                    time.sleep(5)
+                    driver.back()
+
                 driver.back()
                 self.history.append('BACK')
                 print self.history, '\n\n'
@@ -50,12 +81,16 @@ class RedditSurfer(object):
     def grab_info(self):
         pass
 
+default = DefaultSurfer()
 reddit = RedditSurfer()
+imgur = ImgurSurfer()
+
+surfers = {surfer.domain: surfer for surfer in [reddit, imgur, default]}
 
 def run_surfer(surfer):
     driver = webdriver.Firefox()
 
-    while surfer.alive:
-        surfer.act(driver)
+    while surfers['reddit.com'].alive:
+        surfers['reddit.com'].act(driver)
 
 run_surfer(reddit)
