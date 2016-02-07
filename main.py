@@ -1,6 +1,10 @@
 import time
-
+import random
 from selenium import webdriver
+from pymouse import PyMouse
+
+browser_position = (0,0)
+mouse = PyMouse()
 
 def split_url(url):
     url = url.replace('http://','')
@@ -62,11 +66,16 @@ class RedditSurfer(object):
                 new_page = driver.get(comment_link)
                 self.history.append(comment_link)
                 i = 0
+                rd = int(15*random.random())
                 while True:
-                    driver.execute_script("window.scrollTo(0, {}*200);".format(i))
+                    if rd > 0:
+                        rd -= 1
+                    else:
+                        rd = int(5*random.random())
+                    driver.execute_script("window.scrollTo(0, {}*5);".format(i))
                     i += 1
-                    time.sleep(1)
-                    if i == 3:
+                    time.sleep(0.01)
+                    if i == 300:
                         break
 
                 if domain(split_url(content_link)[0]) == 'imgur.com':
@@ -88,7 +97,10 @@ imgur = ImgurSurfer()
 surfers = {surfer.domain: surfer for surfer in [reddit, imgur, default]}
 
 def run_surfer(surfer):
-    driver = webdriver.Firefox()
+    profile = webdriver.FirefoxProfile("/home/walrus/.mozilla/firefox/fhittmzv.procastinator/")
+    driver = webdriver.Firefox(profile)
+    global browser_position
+    browser_position = driver.get_window_position()
 
     while surfers['reddit.com'].alive:
         surfers['reddit.com'].act(driver)
