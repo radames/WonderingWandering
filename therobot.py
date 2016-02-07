@@ -18,7 +18,6 @@ class TheRobot():
         self.profile = webdriver.FirefoxProfile(self.profile_filename)
         self.world = webdriver.Firefox(self.profile)
         self.world_position = self.world.get_window_position()
-        self.browser_position = self.world.get_window_position()
         self.attention_focus = PyMouse()
         self.born_place = random.choice(self.__class__.sites)
         self.alive = False
