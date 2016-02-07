@@ -1,6 +1,7 @@
 import time
 import random
 import os
+from sys import argv
 from selenium import webdriver
 from pymouse import PyMouse
 
@@ -85,21 +86,27 @@ class TheRobot():
             # Find a small window to thw world to look at
             window_to_world = thought.rect
             looking_x, looking_y = self.attention_focus.position()
-            change_x = (looking_x - window_to_world['x'])/10.0
-            change_y = (looking_y - window_to_world['y'])/10.0
+
+            if window_to_world['y'] > self.world.get_window_size()['height']:
+                self.world.execute_script("window.scrollTo(0, {})".format(self.world.get_window_size()['height']))
+
+            change_x = -(looking_x - window_to_world['x'])/10.0
+            change_y = -(looking_y - window_to_world['y'] - 97)/10.0
+            print looking_x, looking_y, window_to_world, change_x, change_y
             steps = 10
             # And move your eye to it!
             while steps > 0:
                 looking_x += change_x
                 looking_y += change_y
-                time.sleep(0.005)
+                print looking_x, looking_y, window_to_world, change_x, change_y
+                time.sleep(0.05)
                 steps -= 1
                 self.attention_focus.move(int(looking_x), int(looking_y))
 
     def memorize(self):
         # To remember is to be alive
         new_memory = self.actual_life + '/memory-{}.jpg'.format(self.memories)
-        self.world.save_screenshot(new_memory)
+        #self.world.save_screenshot(new_memory)
         self.memories += 1
 
     def wander_to(self, place):
@@ -114,6 +121,7 @@ class TheRobot():
             # Don't know where to go, what to do? Start from beginning...
             self.world.get(self.born_place)
 
-me = TheRobot("/home/walrus/.mozilla/firefox/fhittmzv.procastinator/")
+the_profile = argv[1] if len(argv) > 1 else "/home/walrus/.mozilla/firefox/fhittmzv.procastinator/"
+me = TheRobot(the_profile)
 # And so it begins...
 me.live()
