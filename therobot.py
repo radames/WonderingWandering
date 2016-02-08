@@ -16,6 +16,7 @@ class TheRobot():
         self.actual_life = 'ids/life-{}'.format(len(lifes) + 1)
         # And there was light...
         os.mkdir(self.actual_life)
+        self.biography = open(self.actual_life + '/my_life', 'w')
         self.profile_filename = profile_filename
         self.profile = webdriver.FirefoxProfile(self.profile_filename)
         # And the world was created
@@ -42,12 +43,13 @@ class TheRobot():
         while self.alive:
             # Choose what to do
             self.thought = self.choose()
+            self.verbal_thought = '{}\n'.format(self.thought if type(self.thought) == str else self.thought.get_attribute('href'))
             # Pay attention for what you decided
             self.attention(self.thought)
             # And follow it, try not to miss it
             self.wander_to(self.thought)
             # Specially try to not forget it
-            self.memorize()
+            self.memorize(self.thought)
             # And when you are there, think, think... think
             self.think()
             # And maybe you will get bored, But don't despair, you always can one more time...
@@ -92,21 +94,23 @@ class TheRobot():
 
             change_x = -(looking_x - window_to_world['x'])/10.0
             change_y = -(looking_y - window_to_world['y'] - 97)/10.0
-            print looking_x, looking_y, window_to_world, change_x, change_y
+            #print looking_x, looking_y, window_to_world, change_x, change_y
             steps = 10
             # And move your eye to it!
             while steps > 0:
                 looking_x += change_x
                 looking_y += change_y
-                print looking_x, looking_y, window_to_world, change_x, change_y
+                #print looking_x, looking_y, window_to_world, change_x, change_y
                 time.sleep(0.05)
                 steps -= 1
                 self.attention_focus.move(int(looking_x), int(looking_y))
 
-    def memorize(self):
+    def memorize(self, tought):
         # To remember is to be alive
         new_memory = self.actual_life + '/memory-{}.jpg'.format(self.memories)
         #self.world.save_screenshot(new_memory)
+        self.biography.write(self.verbal_thought)
+        self.biography.flush()
         self.memories += 1
 
     def wander_to(self, place):
