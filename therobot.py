@@ -130,23 +130,19 @@ class TheRobot():
             looking_x, looking_y = self.attention_focus.position()
 
             correct_point_of_view = window_to_world['y']
+
             if window_to_world['y'] > self.world.get_window_size()['height']:
                 self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(window_to_world['y'] + 40))
                 correct_point_of_view = 40
+                time.sleep(1)
+            error_x = window_to_world['width']*random.random()
+            error_y = window_to_world['height']*random.random()
 
-            change_x = -(looking_x - window_to_world['x'])/10.0
-            change_y = -(looking_y  - 97 - correct_point_of_view)/10.0
+            pts = self.makemove.getPoints(looking_x, looking_y, window_to_world['x'] + error_x, correct_point_of_view + error_y)
 
-            #print looking_x, looking_y, window_to_world, change_x, change_y
-            steps = 10
-            # And move your eye to it!
-            while steps > 0:
-                looking_x += change_x
-                looking_y += change_y
-                #print looking_x, looking_y, window_to_world, change_x, change_y
-                time.sleep(0.05)
-                steps -= 1
-                self.attention_focus.move(int(looking_x), int(looking_y))
+            for p in pts:
+                self.attention_focus.move(p[0],p[1])
+                time.sleep(1.0/100)
 
     def memorize(self, tought):
         # To remember is to be alive
