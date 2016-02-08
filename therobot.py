@@ -23,6 +23,7 @@ class TheRobot():
         self.profile = webdriver.FirefoxProfile(self.profile_filename)
         # And the world was created
         self.world = webdriver.Firefox(self.profile)
+        self.world.maximize_window()
         # In some place of the universe
         self.world_position = self.world.get_window_position()
         # And one day, something will look at it
@@ -51,7 +52,7 @@ class TheRobot():
             # And follow it, try not to miss it
             self.wander_to(self.thought)
             # Specially try to not forget it
-            self.memorize(self.thought)
+            self.memorize()
             # And when you are there, think, think... think
             self.think()
             # And maybe you will get bored, But don't despair, you always can one more time...
@@ -110,7 +111,7 @@ class TheRobot():
                 steps -= 1
                 self.attention_focus.move(int(looking_x), int(looking_y))
 
-    def memorize(self, tought):
+    def memorize(self):
         # To remember is to be alive
         new_memory = self.actual_life + '/memory-{}.jpg'.format(self.memories)
         #self.world.save_screenshot(new_memory)
