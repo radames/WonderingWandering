@@ -8,7 +8,9 @@ from pymouse import PyMouse
 class TheRobot():
 
     sites = ["http://reddit.com",
-             "http://buzzfeed.com"]
+             "http://9gag.com",
+             "http://youtube.com",
+             "https://en.wikipedia.org/wiki/Special:Random"]
 
     def __init__(self, profile_filename):
         # Where all the unconsciousness will exist
@@ -89,11 +91,14 @@ class TheRobot():
             window_to_world = thought.rect
             looking_x, looking_y = self.attention_focus.position()
 
+            correct_point_of_view = window_to_world['y']
             if window_to_world['y'] > self.world.get_window_size()['height']:
-                self.world.execute_script("window.scrollTo(0, {})".format(self.world.get_window_size()['height']))
+                self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(window_to_world['y'] + 40))
+                correct_point_of_view = 40
 
             change_x = -(looking_x - window_to_world['x'])/10.0
-            change_y = -(looking_y - window_to_world['y'] - 97)/10.0
+            change_y = -(looking_y  - 97 - correct_point_of_view)/10.0
+
             #print looking_x, looking_y, window_to_world, change_x, change_y
             steps = 10
             # And move your eye to it!
