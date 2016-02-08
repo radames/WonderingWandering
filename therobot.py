@@ -1,9 +1,45 @@
 import time
 import random
 import os
+import numpy as np
 from sys import argv
 from selenium import webdriver
 from pymouse import PyMouse
+
+class MakeMove():
+    NPTS = 100
+
+    def linear_bezier(self, point1, point2, t):
+        return (1.0 - t) * point1 + t * point2
+
+    def interpolate_control_points(self, points, t):
+        return [
+            self.linear_bezier(point1, point2, t)
+            for point1, point2 in zip(points, points[1:])]
+
+    def bezier(self, control_points, t, stoplevel=2):
+        points = self.points_as_arrays(control_points)
+        while len(points) > stoplevel:
+            points = self.interpolate_control_points(points, t)
+            return self.linear_bezier(points[0], points[1], t)
+
+    def points_as_arrays(self, point_tuples):
+        return [np.array(point) for point in point_tuples]
+
+    def getPoints(self, startx, starty, endx, endy):
+        p0 = (startx, starty)
+        p1 = (endx, endy)
+
+        pxdiff = p1[0] - p0[0]
+        pydiff = p1[1] - p0[1]
+
+        control_points = [p0, (p0[0]/1.5,p0[0]/1.5), p1, p1]
+        times = np.linspace(0, 1, num=self.NPTS)
+        curve = np.array([self.bezier(control_points, t) for t in times]).T
+
+        bzPos = zip(*curve.tolist())
+        return bzPos
+
 
 class TheRobot():
 
@@ -34,6 +70,8 @@ class TheRobot():
         self.alive = False
         # And of course, no memories
         self.memories = 0
+
+        self.makemove = MakeMove()
 
     def live(self):
         # And so we created it
@@ -93,23 +131,19 @@ class TheRobot():
             looking_x, looking_y = self.attention_focus.position()
 
             correct_point_of_view = window_to_world['y']
+
             if window_to_world['y'] > self.world.get_window_size()['height']:
                 self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(window_to_world['y'] + 40))
                 correct_point_of_view = 40
+                time.sleep(1)
+            error_x = window_to_world['width']*random.random()
+            error_y = window_to_world['height']*random.random()
 
-            change_x = -(looking_x - window_to_world['x'])/10.0
-            change_y = -(looking_y  - 97 - correct_point_of_view)/10.0
+            pts = self.makemove.getPoints(looking_x, looking_y, window_to_world['x'] + error_x, correct_point_of_view + error_y)
 
-            #print looking_x, looking_y, window_to_world, change_x, change_y
-            steps = 10
-            # And move your eye to it!
-            while steps > 0:
-                looking_x += change_x
-                looking_y += change_y
-                #print looking_x, looking_y, window_to_world, change_x, change_y
-                time.sleep(0.05)
-                steps -= 1
-                self.attention_focus.move(int(looking_x), int(looking_y))
+            for p in pts:
+                self.attention_focus.move(p[0],p[1])
+                time.sleep(1.0/100)
 
     def memorize(self):
         # To remember is to be alive

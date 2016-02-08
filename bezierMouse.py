@@ -21,10 +21,10 @@ def bezier(control_points, t, stoplevel=2):
 def points_as_arrays(point_tuples):
     return [np.array(point) for point in point_tuples]
 
-NPTS = 1000
+NPTS = 100
 
-p0 = (random(0,1440), random(0,900))
-p1 = (random(0,1440), random(0,900))
+p0 = (random(0,1440), random(0,200))
+p1 = (random(0,1440), random(700,900))
 
 pxdiff = p1[0] - p0[0]
 pydiff = p1[1] - p0[1]
