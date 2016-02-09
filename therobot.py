@@ -8,10 +8,6 @@ from selenium import webdriver
 import bs4
 from pymouse import PyMouse
 
-def get_domain(url):
-    p = re.compile('.*//([^!]*?)(?=/)')
-    return p.match(url).group(1)
-
 def split_url(url):
     rp = re.compile('http.?://')
     url = rp.sub('', url)
@@ -87,6 +83,33 @@ class TheRobot():
         self.short_time_memory = set()
         self.makemove = MakeMove()
 
+    def get_environment(self, url):
+        p = re.compile('.*//([^!]*?)(?=/)')
+        environment = p.match(url).group(1)
+        return '.'.join(environment.split('.')[-2:])
+
+    def create_masks(self):
+        self.masks = {}
+        self.masks['youtube.com'] = self.behave_in_youtube
+
+    def behave_in(self, environment):
+        if self.masks.has_key(environment):
+            self.masks[environment]()
+        else:
+            self.default_behaviour()
+
+    def default_behaviour(self):
+        self.time_to_think = 1 + 1*random.random()
+        self.started_wonder_at = time.time()
+        self.is_thinking = True
+        while self.is_thinking:
+            time_now = time.time()
+            if time_now - self.started_wonder_at > self.time_to_think:
+                self.is_thinking = False
+
+    def behave_in_youtube(self):
+        print "YOUTUBE"
+
     def live(self):
         # And so we created it
         self.born_time = time.time()
@@ -94,6 +117,8 @@ class TheRobot():
         self.alive = True
         # Beginning from someplace
         self.wander_to(self.born_place)
+        # And let's have some instincts
+        self.create_masks()
 
         while self.alive:
             # Choose what to do
@@ -128,14 +153,8 @@ class TheRobot():
         return choice
 
     def think(self):
-        # For now, to think is to exist, just let the time flows. What is "to wonder"?
-        self.time_to_think = 1 + 1*random.random()
-        self.started_wonder_at = time.time()
-        self.is_thinking = True
-        while self.is_thinking:
-            time_now = time.time()
-            if time_now - self.started_wonder_at > self.time_to_think:
-                self.is_thinking = False
+        environment = self.get_environment(self.verbal_thought)
+        self.behave_in(environment)
 
     def attention(self, thought):
         # Is it a concrete thought?
