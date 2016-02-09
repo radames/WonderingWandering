@@ -1,5 +1,6 @@
 import time
 import random
+import re
 from selenium import webdriver
 from pymouse import PyMouse
 
@@ -7,7 +8,8 @@ browser_position = (0,0)
 mouse = PyMouse()
 
 def split_url(url):
-    url = url.replace('http://','')
+    rp = re.compile('http.?://')
+    url = rp.sub('', url)
     return url.split('/')[-1:] if url.endswith('/') else url.split('/')
 
 def domain(url):

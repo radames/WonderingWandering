@@ -1,10 +1,28 @@
 import time
 import random
 import os
+import re
 import numpy as np
 from sys import argv
 from selenium import webdriver
+import bs4
 from pymouse import PyMouse
+
+def get_domain(url):
+    p = re.compile('.*//([^!]*?)(?=/)')
+    return p.match(url).group(1)
+
+def split_url(url):
+    rp = re.compile('http.?://')
+    url = rp.sub('', url)
+    return url.split('/')[-1:] if url.endswith('/') else url.split('/')
+
+def readable(element):
+    if element.parent.name in ['style', 'script', '[document]', 'head', 'title']:
+        return False
+    elif isinstance(element, bs4.element.Comment):
+        return False
+    return True
 
 class MakeMove():
     NPTS = 100
@@ -29,24 +47,18 @@ class MakeMove():
     def getPoints(self, startx, starty, endx, endy):
         p0 = (startx, starty)
         p1 = (endx, endy)
-
-        pxdiff = p1[0] - p0[0]
-        pydiff = p1[1] - p0[1]
-
         control_points = [p0, (p0[0]/1.5,p0[0]/1.5), p1, p1]
         times = np.linspace(0, 1, num=self.NPTS)
         curve = np.array([self.bezier(control_points, t) for t in times]).T
-
         bzPos = zip(*curve.tolist())
         return bzPos
-
 
 class TheRobot():
 
     sites = ["http://reddit.com",
              "http://9gag.com",
              "http://youtube.com",
-             "https://en.wikipedia.org/wiki/Special:Random"]
+             "http://bcc.co.uk"]
 
     def __init__(self, profile_filename):
         # Where all the unconsciousness will exist
@@ -60,6 +72,8 @@ class TheRobot():
         # And the world was created
         self.world = webdriver.Firefox(self.profile)
         self.world.maximize_window()
+        # What is the world's border size?
+        self.world_border = self.world.get_window_size()['height'] - self.world.find_element_by_tag_name('html').rect['height']
         # In some place of the universe
         self.world_position = self.world.get_window_position()
         # And one day, something will look at it
@@ -70,7 +84,7 @@ class TheRobot():
         self.alive = False
         # And of course, no memories
         self.memories = 0
-
+        self.short_time_memory = set()
         self.makemove = MakeMove()
 
     def live(self):
@@ -130,11 +144,11 @@ class TheRobot():
             window_to_world = thought.rect
             looking_x, looking_y = self.attention_focus.position()
 
-            correct_point_of_view = window_to_world['y']
+            correct_point_of_view = window_to_world['y'] + self.world_border
 
             if window_to_world['y'] > self.world.get_window_size()['height']:
                 self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(window_to_world['y'] + 40))
-                correct_point_of_view = 40
+                correct_point_of_view = 40 + self.world_border
                 time.sleep(1)
             error_x = window_to_world['width']*random.random()
             error_y = window_to_world['height']*random.random()
