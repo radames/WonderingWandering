@@ -105,13 +105,20 @@ class TheRobot():
             self.default_behaviour()
 
     def default_behaviour(self):
-        self.time_to_think = 1 + 1*random.random()
+        self.time_to_think = 1 + 3*random.random()
         self.started_wonder_at = time.time()
         self.is_thinking = True
+        self.world_height = self.world.find_element_by_tag_name('body').rect['height']
+        self.small_thought_time = time.time()
+
         while self.is_thinking:
             time_now = time.time()
             if time_now - self.started_wonder_at > self.time_to_think:
                 self.is_thinking = False
+            if time_now - self.small_thought_time > 0.4:
+                self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(random.random()*self.world_height))
+                self.small_thought_time = time.time()
+
 
     def wait(self, wait_time):
         self.time_to_think = wait_time
@@ -142,6 +149,15 @@ class TheRobot():
             # Choose what to do
             self.thought = self.choose()
             self.verbal_thought = '{}\n'.format(self.thought if type(self.thought) == str else self.thought.get_attribute('href'))
+            new_environment = self.get_environment(self.verbal_thought) if self.verbal_thought else 'NORMALITY'
+
+            # Everyone loves a change... sometimes
+            if new_environment == self.environment:
+                self.boredness += 1
+                print "BORED {}".format(self.boredness)
+
+            self.environment = new_environment
+
             # Pay attention for what you decided
             self.attention(self.thought)
             # And follow it, try not to miss it
@@ -171,8 +187,7 @@ class TheRobot():
         return choice
 
     def think(self):
-        self.environment = self.get_environment(self.verbal_thought) if self.verbal_thought else 'NORMALITY'
-        self.behave_in(self.environment)
+       self.behave_in(self.environment)
 
     def attention(self, thought):
         # Is it a concrete thought?
