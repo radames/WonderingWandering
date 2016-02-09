@@ -54,7 +54,7 @@ class TheRobot():
     sites = ["http://reddit.com",
              "http://9gag.com",
              "http://youtube.com",
-             "http://bcc.co.uk"]
+             "http://bbc.co.uk"]
 
     def __init__(self, profile_filename):
         # Where all the unconsciousness will exist
@@ -82,10 +82,16 @@ class TheRobot():
         self.memories = 0
         self.short_time_memory = set()
         self.makemove = MakeMove()
+        self.boredness = 0
+        self.environment = 'NORMALITY'
 
     def get_environment(self, url):
         p = re.compile('.*//([^!]*?)(?=/)')
-        environment = p.match(url).group(1)
+        environment_match = p.match(url)
+        if environment_match:
+            environment = environment_match.group(1)
+        else:
+            environment = 'NORMALITY'
         return '.'.join(environment.split('.')[-2:])
 
     def create_masks(self):
@@ -107,8 +113,20 @@ class TheRobot():
             if time_now - self.started_wonder_at > self.time_to_think:
                 self.is_thinking = False
 
+    def wait(self, wait_time):
+        self.time_to_think = wait_time
+        self.started_wonder_at = time.time()
+        self.is_thinking = True
+        while self.is_thinking:
+            time_now = time.time()
+            if time_now - self.started_wonder_at > self.time_to_think:
+                self.is_thinking = False
+
     def behave_in_youtube(self):
-        print "YOUTUBE"
+        if 'watch' in self.world.current_url:
+            self.wait(36)
+        else:
+            self.default_behaviour()
 
     def live(self):
         # And so we created it
@@ -153,8 +171,8 @@ class TheRobot():
         return choice
 
     def think(self):
-        environment = self.get_environment(self.verbal_thought)
-        self.behave_in(environment)
+        self.environment = self.get_environment(self.verbal_thought) if self.verbal_thought else 'NORMALITY'
+        self.behave_in(self.environment)
 
     def attention(self, thought):
         # Is it a concrete thought?
