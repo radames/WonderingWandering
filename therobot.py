@@ -1,5 +1,6 @@
 import time
 import random
+import logging
 import os
 import re
 import numpy as np
@@ -7,11 +8,6 @@ from sys import argv
 from selenium import webdriver
 import bs4
 from pymouse import PyMouse
-
-def split_url(url):
-    rp = re.compile('http.?://')
-    url = rp.sub('', url)
-    return url.split('/')[-1:] if url.endswith('/') else url.split('/')
 
 def readable(element):
     if element.parent.name in ['style', 'script', '[document]', 'head', 'title']:
@@ -62,7 +58,8 @@ class TheRobot():
         self.actual_life = 'ids/life-{}'.format(len(lifes) + 1)
         # And there was light...
         os.mkdir(self.actual_life)
-        self.biography = open(self.actual_life + '/my_life', 'w')
+        self.biography_title = self.actual_life + '/my_life'
+        self.biography = open(self.biography_title, 'w')
         self.profile_filename = profile_filename
         self.profile = webdriver.FirefoxProfile(self.profile_filename)
         # And the world was created
@@ -82,8 +79,15 @@ class TheRobot():
         self.memories = 0
         self.short_time_memory = set()
         self.makemove = MakeMove()
+        # Not borde yet, but one day it will be
         self.boredness = 0
+        # Normality? Nature vs. Nurture
         self.environment = 'NORMALITY'
+        self.start_your_memory()
+
+    def start_your_memory(self):
+        self.memory = logging
+        self.memory.basicConfig(filename=self.biography_title, level=logging.INFO, format='%(asctime)s %(message)s')
 
     def get_environment(self, url):
         p = re.compile('.*//([^!]*?)(?=/)')
@@ -108,17 +112,10 @@ class TheRobot():
         self.time_to_think = 1 + 3*random.random()
         self.started_wonder_at = time.time()
         self.is_thinking = True
-        self.world_height = self.world.find_element_by_tag_name('body').rect['height']
-        self.small_thought_time = time.time()
-
         while self.is_thinking:
             time_now = time.time()
             if time_now - self.started_wonder_at > self.time_to_think:
                 self.is_thinking = False
-            if time_now - self.small_thought_time > 0.4:
-                self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(random.random()*self.world_height))
-                self.small_thought_time = time.time()
-
 
     def wait(self, wait_time):
         self.time_to_think = wait_time
@@ -131,16 +128,18 @@ class TheRobot():
 
     def behave_in_youtube(self):
         if 'watch' in self.world.current_url:
-            self.wait(36)
+            self.wait(random.random()*36)
         else:
             self.default_behaviour()
 
     def live(self):
         # And so we created it
         self.born_time = time.time()
+        self.memory.info('I was born in {}.'.format(self.born_time))
         # And there was wander...
         self.alive = True
         # Beginning from someplace
+        self.memory.info('Everything started at {}.'.format(self.born_place))
         self.wander_to(self.born_place)
         # And let's have some instincts
         self.create_masks()
@@ -150,16 +149,17 @@ class TheRobot():
             if self.boredness < 5:
                 self.thought = self.choose()
             else:
+                self.memory.info('I am bored! I want to go to another place...')
                 self.thought = random.choice(self.__class__.sites)
                 self.boredness = 0
 
-            self.verbal_thought = '{}\n'.format(self.thought if type(self.thought) == str else self.thought.get_attribute('href'))
+            self.verbal_thought = '{}'.format(self.thought if type(self.thought) == str else self.thought.get_attribute('href'))
+            self.memory.info('I thought that going to {} would be a good idea.'.format(self.verbal_thought))
             new_environment = self.get_environment(self.verbal_thought) if self.verbal_thought else 'NORMALITY'
 
             # Everyone loves a change... sometimes
             if new_environment == self.environment:
                 self.boredness += 1
-                print "BORED {}".format(self.boredness)
                 print self.get_environment(self.verbal_thought)
             else:
                 self.boredness = 0
@@ -167,14 +167,32 @@ class TheRobot():
             self.environment = new_environment
 
             # Pay attention for what you decided
+            self.look_around()
             self.attention(self.thought)
             # And follow it, try not to miss it
             self.wander_to(self.thought)
             # Specially try to not forget it
-            self.memorize()
+            #self.memorize()
             # And when you are there, think, think... think
             self.think()
             # And maybe you will get bored, But don't despair, you always can one more time...
+
+    def look_around(self):
+        self.world_height = self.world.find_element_by_tag_name('body').rect['height']
+        self.looking_around = True
+        self.looking_around_time = random.random()*10
+        self.start_looking_time = time.time()
+        self.small_thought_time = self.start_looking_time
+        while self.looking_around:
+            time_now = time.time()
+            if time_now - self.start_looking_time > self.looking_around_time:
+                self.world.execute_script("window.scrollTo({top: 0, behavior: 'smooth'})")
+                break
+
+            if time_now - self.small_thought_time > 0.4:
+                self.world.execute_script("window.scrollTo({{top: {}, behavior: 'smooth'}})".format(random.random()*self.world_height))
+                self.small_thought_time = time.time()
+
 
     def choose(self):
         # What exist around you?
