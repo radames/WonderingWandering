@@ -92,7 +92,7 @@ class TheRobot():
             environment = environment_match.group(1)
         else:
             environment = 'NORMALITY'
-        return '.'.join(environment.split('.')[-2:])
+        return '.'.join(environment.split('.')[-3:])
 
     def create_masks(self):
         self.masks = {}
@@ -147,7 +147,12 @@ class TheRobot():
 
         while self.alive:
             # Choose what to do
-            self.thought = self.choose()
+            if self.boredness < 5:
+                self.thought = self.choose()
+            else:
+                self.thought = random.choice(self.__class__.sites)
+                self.boredness = 0
+
             self.verbal_thought = '{}\n'.format(self.thought if type(self.thought) == str else self.thought.get_attribute('href'))
             new_environment = self.get_environment(self.verbal_thought) if self.verbal_thought else 'NORMALITY'
 
@@ -155,6 +160,9 @@ class TheRobot():
             if new_environment == self.environment:
                 self.boredness += 1
                 print "BORED {}".format(self.boredness)
+                print self.get_environment(self.verbal_thought)
+            else:
+                self.boredness = 0
 
             self.environment = new_environment
 
